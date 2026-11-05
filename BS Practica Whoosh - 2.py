@@ -137,6 +137,35 @@ def imprimir_lista_apartir_20h(cursor):
     lb.pack(side=LEFT,fill=BOTH)
     sc.config(command = lb.yview)
     
+def buscar_categoria_y_titulo():
+    def mostrar_lista():    
+        with ix.searcher() as searcher:
+            entrada = '"'+str(en.get())+'"' #se ponen comillas porque hay categorías con más de una palabra
+            query = QueryParser("título", ix.schema).parse('categorías:' + entrada + ' NOT "' + str(en1.get()).strip() + '"')
+            results = searcher.search(query,limit=3)
+            imprimir_lista(results)
+    
+    v = Toplevel()
+    v.title("Búsqueda por categorías y Título")
+    l = Label(v, text="Seleccione categoría a buscar:")
+    l.pack(side=LEFT)
+    
+    ix=open_dir("IndexSevilla")      
+    with ix.searcher() as searcher:
+        #lista de todas las categorias disponibles en el campo de caracteristicas
+        lista_caracteristicas = [i.decode('utf-8') for i in searcher.lexicon('categorías')]
+    
+    en = Spinbox(v, values=lista_caracteristicas, state="readonly")
+    en.pack(side=LEFT)
+    
+    l1 = Label(v, text="Escriba palabras que NO deben aparecer en el título:")
+    l1.pack(side=LEFT)
+    en1 = Entry(v, width=75)
+    en1.pack(side=LEFT)
+    
+    b =Button(v, text="Buscar", command=mostrar_lista)
+    b.pack(side=LEFT)
+    
 def ventana_principal():   
     def listar_todo():
         ix=open_dir("IndexSevilla")
@@ -159,10 +188,10 @@ def ventana_principal():
     datosmenu.add_command(label="Listar a partir de las 20h", command=listar_noche)
     datosmenu.add_separator()   
     datosmenu.add_command(label="Salir", command=root.quit)
-    
+
     menubar.add_cascade(label="Datos", menu=datosmenu)
     buscarmenu = Menu(menubar, tearoff=0)
-    
+    buscarmenu.add_command(label="Categoria y Título", command=buscar_categoria_y_titulo)
     menubar.add_cascade(label="Buscar", menu=buscarmenu)
         
     root.config(menu=menubar)
