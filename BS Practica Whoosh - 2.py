@@ -39,25 +39,19 @@ def extraer_datos():
             s1 = BeautifulSoup(f1, 'lxml')
             l1 = s1.find('section',class_='post-content')
             
-            lugar = l1.find('div',class_='block-elto lugar')
-            if lugar:
-                lugar = "".join(lugar.find('div', class_='value').p.stripped_strings)
-            else:
-                lugar = "Desconocido"
-            
             poblacion = l1.find('div',class_='block-elto poblacion')
             if poblacion:
                 poblacion = poblacion.find('div', class_='value').a.string.strip()
             else:
                 poblacion = "Desconocido"
                 
-            fechas = l1.find('div',class_='block-elto fechas')
+            fechas = l1.find('div', class_='block-elto fechas')
             if fechas:
                 fechas = fechas.i.next_sibling.strip()
                 fechas = re.findall('\d{2}/\d{2}/\d{4}', fechas)
-                fecha_inicio = fechas[0]
-                if (len(fechas)>1):
-                    fecha_fin = fechas[1]
+                fecha_inicio = datetime.strptime(fechas[0], '%d/%m/%Y')
+                if len(fechas) > 1:
+                    fecha_fin = datetime.strptime(fechas[1], '%d/%m/%Y')
                 else:
                     fecha_fin = fecha_inicio
             else:
@@ -85,12 +79,12 @@ def extraer_datos():
             else:
                 descripcion = "Desconocido"
 
-            lista.append((titulo,lugar,poblacion,fecha_inicio,fecha_fin,hora,categorias,descripcion))  
+            lista.append((titulo,poblacion,fecha_inicio,fecha_fin,hora,categorias,descripcion))  
 
     return(lista)
 
 def almacenar_datos():
-    schem = Schema(título=TEXT(stored=True), población=TEXT(stored=True), fecha_inicio=DATETIME(stored=True), fecha_fin=DATETIME(stored=True), hora=TEXT(stored=True), categorías=KEYWORD(stored=True), descripción=TEXT(stored=True))
+    schem = Schema(título=TEXT(stored=True), población=TEXT(stored=True), fecha_inicio=DATETIME(stored=True), fecha_fin=DATETIME(stored=True), hora=TEXT(stored=True), categorías=KEYWORD(stored=True), descripción=TEXT(stored=True), )
     
     if os.path.exists("IndexSevilla"):
         shutil.rmtree("IndexSevilla")
