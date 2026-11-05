@@ -84,7 +84,7 @@ def extraer_datos():
     return(lista)
 
 def almacenar_datos():
-    schem = Schema(título=TEXT(stored=True), población=TEXT(stored=True), fecha_inicio=DATETIME(stored=True), fecha_fin=DATETIME(stored=True), hora=TEXT(stored=True), categorías=KEYWORD(stored=True), descripción=TEXT(stored=True), )
+    schem = Schema(título=TEXT(stored=True), población=KEYWORD(stored=True, commas=True), fecha_inicio=DATETIME(stored=True), fecha_fin=DATETIME(stored=True), hora=TEXT(stored=True), categorías=KEYWORD(stored=True), descripción=TEXT(stored=True), )
     
     if os.path.exists("IndexSevilla"):
         shutil.rmtree("IndexSevilla")
@@ -183,6 +183,29 @@ def buscar_15_titulo():
     en.bind("<Return>", mostrar_lista)
     en.pack(side=LEFT)
     
+def buscar_poblacion():
+    def mostrar_lista(event):    
+        with ix.searcher() as searcher:
+            entrada = '"'+str(en.get().strip())+'"'
+            query = QueryParser("población", ix.schema).parse(entrada)
+            results = searcher.search(query,limit=None)
+            imprimir_lista(results)
+    
+    
+    v = Toplevel()
+    v.title("Búsqueda por Población")
+    l = Label(v, text="Seleccione población a buscar:")
+    l.pack(side=LEFT)
+    
+    ix=open_dir("IndexSevilla")      
+    with ix.searcher() as searcher:
+        #lista de todas las poblaciones
+        lista_autores = [i.decode('utf-8') for i in searcher.lexicon('población')]
+    
+    en = Spinbox(v, values=lista_autores, state="readonly")
+    en.bind("<Return>", mostrar_lista)
+    en.pack(side=LEFT)
+    
 def ventana_principal():   
     def listar_todo():
         ix=open_dir("IndexSevilla")
@@ -209,6 +232,7 @@ def ventana_principal():
     menubar.add_cascade(label="Datos", menu=datosmenu)
     buscarmenu = Menu(menubar, tearoff=0)
     buscarmenu.add_command(label="Título", command=buscar_15_titulo)
+    buscarmenu.add_command(label="Población", command=buscar_poblacion)
     buscarmenu.add_command(label="Categoria y Título", command=buscar_categoria_y_titulo)
     menubar.add_cascade(label="Buscar", menu=buscarmenu)
         
