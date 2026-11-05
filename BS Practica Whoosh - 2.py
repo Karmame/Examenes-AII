@@ -166,6 +166,23 @@ def buscar_categoria_y_titulo():
     b =Button(v, text="Buscar", command=mostrar_lista)
     b.pack(side=LEFT)
     
+def buscar_15_titulo():
+    def mostrar_lista(event):
+            ix=open_dir("IndexSevilla")   
+            with ix.searcher() as  searcher:
+                query = QueryParser("título", ix.schema).parse('"'+ str(en.get()) + '"')
+                results = searcher.search(query,limit=15)
+                imprimir_lista(results)
+        
+    v = Toplevel()
+    v.title("Búsqueda por Título")
+            
+    l1 = Label(v, text="Escriba el título:")
+    l1.pack(side=LEFT)
+    en = Entry(v, width=75)
+    en.bind("<Return>", mostrar_lista)
+    en.pack(side=LEFT)
+    
 def ventana_principal():   
     def listar_todo():
         ix=open_dir("IndexSevilla")
@@ -191,6 +208,7 @@ def ventana_principal():
 
     menubar.add_cascade(label="Datos", menu=datosmenu)
     buscarmenu = Menu(menubar, tearoff=0)
+    buscarmenu.add_command(label="Título", command=buscar_15_titulo)
     buscarmenu.add_command(label="Categoria y Título", command=buscar_categoria_y_titulo)
     menubar.add_cascade(label="Buscar", menu=buscarmenu)
         
