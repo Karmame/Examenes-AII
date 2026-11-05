@@ -213,7 +213,6 @@ def buscar_fecha_y_titulo():
             fecha_str = str(en.get()).strip()
             s = re.compile('^\d{8}$').match(fecha_str)
             if s:
-                # Evento activo en esa fecha: empieza antes o ese día ([TO fecha]) y termina ese día o después ([fecha TO])
                 consulta = 'fecha_inicio:[TO ' + fecha_str + '] fecha_fin:[' + fecha_str + ' TO] ' + str(en1.get()).strip()
                 query = QueryParser("título", ix.schema).parse(consulta)
                 results = searcher.search(query, limit=None)
@@ -234,6 +233,77 @@ def buscar_fecha_y_titulo():
     en1.pack(side=LEFT)
     
     b =Button(v, text="Buscar", command=mostrar_lista)
+    b.pack(side=LEFT)
+    
+def modificar_fechas():
+    def modificar():
+        ix = open_dir("IndexSevilla")
+        with ix.searcher() as searcher:
+            s = re.compile('^(\d{2})-(\d{2})-(\d{4})$').match(str(en.get()).strip())
+            s1 = re.compile('^(\d{2})-(\d{2})-(\d{4})$').match(str(en1.get()).strip())
+            
+            if s and s1:
+                # Formato AAAAMMDD para consultar en Whoosh
+                fecha_buscar = s.group(3) + s.group(2) + s.group(1)
+                nueva_fecha = datetime.strptime(str(en1.get()).strip(), '%d-%m-%Y')
+                
+                consulta = 'fecha_inicio:[TO ' + fecha_buscar + '] fecha_fin:[' + fecha_buscar + ' TO]'
+                query = QueryParser("título", ix.schema).parse(consulta)
+                results = searcher.search(query, limit=None)
+                
+                total = len(results)
+                if total > 0:
+                    # Guardamos los eventos en una lista auxiliar antes de borrarlos
+                    lista_modificar = []
+                    for r in results:
+                        lista_modificar.append((
+                            r['título'],
+                            r['población'],
+                            r['hora'],
+                            r['categorías'],
+                            r['descripción']
+                        ))
+                    
+                    respuesta = messagebox.askyesno(
+                        title="Confirmar",
+                        message="Se celebran " + str(total) + " eventos en esa fecha.\n¿Está seguro que desea modificar sus fechas?"
+                    )
+                    if respuesta:
+                        writer = ix.writer()
+                        # Borramos los eventos antiguos
+                        writer.delete_by_query(query)
+                        # Los volvemos a insertar con la fecha nueva
+                        for p in lista_modificar:
+                            writer.add_document(
+                                título=p[0],
+                                población=p[1],
+                                fecha_inicio=nueva_fecha,
+                                fecha_fin=nueva_fecha,
+                                hora=p[2],
+                                categorías=p[3],
+                                descripción=p[4]
+                            )
+                        writer.commit()
+                        messagebox.showinfo("Modificado", "Se han modificado las fechas de " + str(total) + " eventos.")
+                else:
+                    messagebox.showinfo("AVISO", "No hay ningún evento que se celebre en esa fecha.")
+            else:
+                messagebox.showerror("ERROR", "Formato de fechas incorrecto. Debe ser DD-MM-AAAA")
+
+    v = Toplevel()
+    v.title("Modificar fechas")
+    
+    l = Label(v, text="Introduzca fecha a buscar (DD-MM-AAAA):")
+    l.pack(side=LEFT)
+    en = Entry(v, width=20)
+    en.pack(side=LEFT)
+    
+    l1 = Label(v, text="Introduzca nueva fecha (DD-MM-AAAA):")
+    l1.pack(side=LEFT)
+    en1 = Entry(v, width=20)
+    en1.pack(side=LEFT)
+    
+    b = Button(v, text="Modificar", command=modificar)
     b.pack(side=LEFT)
     
 def ventana_principal():   
@@ -265,6 +335,7 @@ def ventana_principal():
     buscarmenu.add_command(label="Población", command=buscar_poblacion)
     buscarmenu.add_command(label="Categoria y Título", command=buscar_categoria_y_titulo)
     buscarmenu.add_command(label="Fecha y Título", command=buscar_fecha_y_titulo)
+    buscarmenu.add_command(label="Modificar fechas", command=modificar_fechas)
     menubar.add_cascade(label="Buscar", menu=buscarmenu)
         
     root.config(menu=menubar)
