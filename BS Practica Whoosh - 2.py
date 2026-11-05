@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter import messagebox
 import re, os, shutil
 from datetime import datetime
-from whoosh import query
+from whoosh import query, scoring
 from whoosh.index import create_in,open_dir
 from whoosh.fields import Schema, TEXT, DATETIME, KEYWORD, NUMERIC
 from whoosh.qparser import MultifieldParser, QueryParser
@@ -305,7 +305,45 @@ def modificar_fechas():
     
     b = Button(v, text="Modificar", command=modificar)
     b.pack(side=LEFT)
+
+
+def buscar_titulo_subcadena():
+    def mostrar_lista(event):
+        entrada = str(en.get()).strip()
+        # Comprobamos que sea una cadena de caracteres sin espacios
+        if re.compile('^\S+$').match(entrada):
+            ix = open_dir("IndexSevilla")   
+            # Usamos TF_IDF como algoritmo de ranking
+            with ix.searcher(weighting=scoring.TF_IDF()) as searcher:
+                # El asterisco (*) al final busca palabras que comiencen por esa subcadena
+                query = QueryParser("título", ix.schema).parse(entrada + '*')
+                results = searcher.search(query, limit=5)
+                imprimir_solo_titulo(results)
+        else:
+            messagebox.showerror("ERROR", "Formato incorrecto: introduzca una cadena sin espacios")
+        
+    v = Toplevel()
+    v.title("Búsqueda de Título por Subcadena")
+            
+    l1 = Label(v, text="Escriba subcadena (sin espacios):")
+    l1.pack(side=LEFT)
+    en = Entry(v, width=75)
+    en.bind("<Return>", mostrar_lista)
+    en.pack(side=LEFT)
     
+def imprimir_solo_titulo(cursor):
+    
+    v = Toplevel()
+    v.title("EVENTOS DE SEVILLA")
+    sc = Scrollbar(v)
+    sc.pack(side=RIGHT, fill=Y)
+    lb = Listbox(v, width = 150, yscrollcommand=sc.set)
+    for row in cursor:
+        lb.insert(END, "Título: "+row['título'])
+        lb.insert(END,"\n\n")
+    lb.pack(side=LEFT,fill=BOTH)
+    sc.config(command = lb.yview)   
+
 def ventana_principal():   
     def listar_todo():
         ix=open_dir("IndexSevilla")
@@ -336,6 +374,7 @@ def ventana_principal():
     buscarmenu.add_command(label="Categoria y Título", command=buscar_categoria_y_titulo)
     buscarmenu.add_command(label="Fecha y Título", command=buscar_fecha_y_titulo)
     buscarmenu.add_command(label="Modificar fechas", command=modificar_fechas)
+    buscarmenu.add_command(label="Título por subcadena", command=buscar_titulo_subcadena)
     menubar.add_cascade(label="Buscar", menu=buscarmenu)
         
     root.config(menu=menubar)
