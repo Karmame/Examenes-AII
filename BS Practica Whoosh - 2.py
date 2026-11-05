@@ -310,12 +310,9 @@ def modificar_fechas():
 def buscar_titulo_subcadena():
     def mostrar_lista(event):
         entrada = str(en.get()).strip()
-        # Comprobamos que sea una cadena de caracteres sin espacios
         if re.compile('^\S+$').match(entrada):
             ix = open_dir("IndexSevilla")   
-            # Usamos TF_IDF como algoritmo de ranking
             with ix.searcher(weighting=scoring.TF_IDF()) as searcher:
-                # El asterisco (*) al final busca palabras que comiencen por esa subcadena
                 query = QueryParser("título", ix.schema).parse(entrada + '*')
                 results = searcher.search(query, limit=5)
                 imprimir_solo_titulo(results)
