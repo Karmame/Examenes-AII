@@ -12,12 +12,10 @@ from whoosh.fields import Schema, TEXT, DATETIME, ID, KEYWORD
 from whoosh.qparser import QueryParser, MultifieldParser
 from whoosh import scoring
 
-# -----------------------------------------------------------------------------------
-# 1. EXTRACCIÓN DE DATOS (Tu función)
-# -----------------------------------------------------------------------------------
+
 def extraer_datos():
     lista = []
-    for p in range(1, 4):
+    for p in range(1, 5):
         req = urllib.request.Request("https://sevilla.cosasdecome.es/eventos/filtrar?pg="+str(p), headers={'User-Agent': 'Mozilla/5.0'})
         f = urllib.request.urlopen(req)
         s = BeautifulSoup(f, 'lxml')     
@@ -63,12 +61,10 @@ def extraer_datos():
             lista.append((titulo, lugar, poblacion, fecha_inicio, fecha_fin, hora, categorias, descripcion))  
     return lista
 
-# -----------------------------------------------------------------------------------
-# 2. GESTIÓN DEL ÍNDICE WHOOSH
-# -----------------------------------------------------------------------------------
+
 def cargar():
     if os.path.exists("IndexEventos"):
-        if not messagebox.askyesno("Confirmar", "Ya existe un índice. ¿Desea volver a crearlo?"):
+        if not messagebox.askyesno("Confirmar", "Esta seguro que quiere recargar los datos. \nEsta operación puede ser lenta"):
             return
         shutil.rmtree("IndexEventos")
     os.mkdir("IndexEventos")
