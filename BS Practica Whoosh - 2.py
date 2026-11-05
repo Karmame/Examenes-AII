@@ -104,7 +104,7 @@ def almacenar_datos():
 def imprimir_lista(cursor):
     
     v = Toplevel()
-    v.title("ESTRENOS DE CINE")
+    v.title("EVENTOS DE SEVILLA")
     sc = Scrollbar(v)
     sc.pack(side=RIGHT, fill=Y)
     lb = Listbox(v, width = 150, yscrollcommand=sc.set)
@@ -206,6 +206,36 @@ def buscar_poblacion():
     en.bind("<Return>", mostrar_lista)
     en.pack(side=LEFT)
     
+def buscar_fecha_y_titulo():
+    def mostrar_lista():
+        ix = open_dir("IndexSevilla")   
+        with ix.searcher() as searcher:
+            fecha_str = str(en.get()).strip()
+            s = re.compile('^\d{8}$').match(fecha_str)
+            if s:
+                # Evento activo en esa fecha: empieza antes o ese día ([TO fecha]) y termina ese día o después ([fecha TO])
+                consulta = 'fecha_inicio:[TO ' + fecha_str + '] fecha_fin:[' + fecha_str + ' TO] ' + str(en1.get()).strip()
+                query = QueryParser("título", ix.schema).parse(consulta)
+                results = searcher.search(query, limit=None)
+                imprimir_lista(results)
+            else:
+                messagebox.showerror("ERROR", "Formato de fecha incorrecto AAAAMMDD")
+    
+    v = Toplevel()
+    v.title("Búsqueda por Fecha y Título")
+    l = Label(v, text="Escriba una fecha (AAAAMMDD):")
+    l.pack(side=LEFT)   
+    en = Entry(v)
+    en.pack(side=LEFT)
+    
+    l1 = Label(v, text="Escriba palabras del título:")
+    l1.pack(side=LEFT)
+    en1 = Entry(v, width=75)
+    en1.pack(side=LEFT)
+    
+    b =Button(v, text="Buscar", command=mostrar_lista)
+    b.pack(side=LEFT)
+    
 def ventana_principal():   
     def listar_todo():
         ix=open_dir("IndexSevilla")
@@ -234,6 +264,7 @@ def ventana_principal():
     buscarmenu.add_command(label="Título", command=buscar_15_titulo)
     buscarmenu.add_command(label="Población", command=buscar_poblacion)
     buscarmenu.add_command(label="Categoria y Título", command=buscar_categoria_y_titulo)
+    buscarmenu.add_command(label="Fecha y Título", command=buscar_fecha_y_titulo)
     menubar.add_cascade(label="Buscar", menu=buscarmenu)
         
     root.config(menu=menubar)
