@@ -24,7 +24,7 @@ def cargar():
 def extraer_datos():
     lista=[]
     
-    for p in range(1,4):
+    for p in range(1,5):
         req = urllib.request.Request("https://sevilla.cosasdecome.es/eventos/filtrar?pg="+str(p), headers={'User-Agent': 'Mozilla/5.0'})
         f = urllib.request.urlopen(req)
         s = BeautifulSoup(f, 'lxml')     
@@ -99,9 +99,55 @@ def almacenar_datos():
         writer.add_document(título=j[0], población=j[1], fecha_inicio=j[2], fecha_fin=j[3], hora=j[4], categorías=j[5], descripción=j[6])
         i+=1
     writer.commit()
-    messagebox.showinfo("Fin de indexado", "Se han indexado "+str(i)+ " documentos")     
+    messagebox.showinfo("Fin de indexado", "Se han indexado "+str(i)+ " documentos")  
     
-def ventana_principal():      
+def imprimir_lista(cursor):
+    
+    v = Toplevel()
+    v.title("ESTRENOS DE CINE")
+    sc = Scrollbar(v)
+    sc.pack(side=RIGHT, fill=Y)
+    lb = Listbox(v, width = 150, yscrollcommand=sc.set)
+    for row in cursor:
+        lb.insert(END, "Título: "+row['título'])
+        lb.insert(END, "Población: "+row['población'])
+        lb.insert(END, "Fecha inicio: "+str(row['fecha_inicio']))
+        lb.insert(END, "Fecha fin: "+str(row['fecha_fin']))
+        lb.insert(END, "Hora: "+row['hora'])
+        lb.insert(END, "Categorías: "+row['categorías'])
+        lb.insert(END,"\n\n")
+    lb.pack(side=LEFT,fill=BOTH)
+    sc.config(command = lb.yview)   
+    
+def imprimir_lista_apartir_20h(cursor):
+    v = Toplevel()
+    v.title("ESTRENOS DE CINE A PARTIR DE LAS 20H")
+    sc = Scrollbar(v)
+    sc.pack(side=RIGHT, fill=Y)
+    lb = Listbox(v, width = 150, yscrollcommand=sc.set)
+    for row in cursor:
+        if row['hora'] >= '20:00' and row['hora'] != 'Desconocido':
+            lb.insert(END, "Título: "+row['título'])
+            lb.insert(END, "Población: "+row['población'])
+            lb.insert(END, "Fecha inicio: "+str(row['fecha_inicio']))
+            lb.insert(END, "Fecha fin: "+str(row['fecha_fin']))
+            lb.insert(END, "Hora: "+row['hora'])
+            lb.insert(END, "Categorías: "+row['categorías'])
+            lb.insert(END,"\n\n")
+    lb.pack(side=LEFT,fill=BOTH)
+    sc.config(command = lb.yview)
+    
+def ventana_principal():   
+    def listar_todo():
+        ix=open_dir("IndexSevilla")
+        with ix.searcher() as searcher:
+            results = searcher.search(query.Every(),limit=None)
+            imprimir_lista(results)    
+    def listar_noche():
+            ix=open_dir("IndexSevilla")
+            with ix.searcher() as searcher:
+                results = searcher.search(query.Every(),limit=None)
+                imprimir_lista_apartir_20h(results)   
     root = Tk()
     root.geometry("150x100")
 
@@ -109,6 +155,8 @@ def ventana_principal():
     
     datosmenu = Menu(menubar, tearoff=0)
     datosmenu.add_command(label="Cargar", command=cargar)
+    datosmenu.add_command(label="Listar", command=listar_todo)
+    datosmenu.add_command(label="Listar a partir de las 20h", command=listar_noche)
     datosmenu.add_separator()   
     datosmenu.add_command(label="Salir", command=root.quit)
     
